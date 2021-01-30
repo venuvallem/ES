@@ -1,0 +1,52 @@
+#include <lpc214x.h>
+#define READ 0
+
+void pll(void);
+void delay(unsigned int z);
+
+int main(void)
+{
+    unsigned int i;
+	IO0DIR=0xffffffff;
+    pll(); 
+	while(1)
+	{                 //Fosc=12Mhz,CCLK=60Mhz,PCLK=60MHz
+    	if((IO1PIN & (1<<16)) == READ)
+		{
+			for (i = 0; i < 8 ;i++)
+			{
+			IOSET0 |= (1<<i)  ;
+			delay(100);
+			IOCLR0 |= (1<<i);
+			delay(100);
+			}
+			
+	}              //1sec delay
+    }
+}
+
+void pll(void)                  //Fosc=12Mhz,CCLK=60Mhz,PCLK=60MHz
+{
+    PLL0CON=0x01;
+    PLL0CFG=0x24;
+    PLL0FEED=0xaa;
+    PLL0FEED=0x55;
+    while(!(PLL0STAT&(1<<10)));
+    PLL0CON=0x03;
+    PLL0FEED=0xaa;
+    PLL0FEED=0x55;
+    VPBDIV=0x01;
+}
+
+
+void delay(unsigned int z)
+{
+    T0CTCR=0x0;                                 //Select Timer Mode
+    T0TCR=0x00;                 //Timer off
+    T0PR=59999;                 //Prescaler value for 1ms
+    T0TCR=0x02;                 //Timer reset
+    T0TCR=0x01;                 //Timer ON
+    while(T0TC<z);           
+    T0TCR=0x00;                 //Timer OFF
+    T0TC=0;                     //Clear the TC value. This is Optional.
+}
